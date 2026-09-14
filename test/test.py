@@ -13,6 +13,7 @@ async def test_alu_operation(dut, A, B, opcode, expected_result, expected_carry)
     await Timer(1, unit="ns")
 
     # Read output
+    print("uo_out =", dut.uo_out.value)
     output = int(dut.uo_out.value)
 
     actual_result = output & 0xF
