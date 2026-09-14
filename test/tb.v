@@ -37,7 +37,7 @@ module tb;
         rst_n  = 1'b1;
 
         // Run simulation for a short time
-        #100;
+        #10000;
 
         $finish;
     end
