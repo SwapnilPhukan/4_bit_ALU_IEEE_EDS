@@ -10,7 +10,7 @@ async def test_alu_operation(dut, A, B, opcode, expected_result, expected_carry)
     dut.uio_in.value = opcode
 
     # Give the combinational logic time to settle
-    await Timer(1, units="ns")
+    await Timer(1, unit="ns")
 
     # Read output
     output = int(dut.uo_out.value)
