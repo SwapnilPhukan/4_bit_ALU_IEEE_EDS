@@ -1,40 +1,118 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
-# SPDX-License-Identifier: Apache-2.0
-
 import cocotb
-from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
+from cocotb.triggers import Timer
+
+
+async def test_alu_operation(dut, A, B, opcode, expected_result, expected_carry):
+    # Put A and B onto ui_in
+    dut.ui_in.value = A | (B << 4)
+
+    # Put opcode onto uio_in[2:0]
+    dut.uio_in.value = opcode
+
+    # Give the combinational logic time to settle
+    await Timer(1, units="ns")
+
+    # Read output
+    output = int(dut.uo_out.value)
+
+    actual_result = output & 0xF
+    actual_carry = (output >> 4) & 1
+    actual_zero = (output >> 5) & 1
+
+    # Check result
+    assert actual_result == expected_result, (
+        f"Opcode {opcode:03b}: "
+        f"A={A:04b}, B={B:04b}, "
+        f"expected result={expected_result:04b}, "
+        f"got={actual_result:04b}"
+    )
+
+    # Check carry
+    assert actual_carry == expected_carry, (
+        f"Opcode {opcode:03b}: "
+        f"A={A:04b}, B={B:04b}, "
+        f"expected carry={expected_carry}, "
+        f"got={actual_carry}"
+    )
+
+    # Check zero flag
+    expected_zero = 1 if expected_result == 0 else 0
+
+    assert actual_zero == expected_zero, (
+        f"Opcode {opcode:03b}: "
+        f"expected zero={expected_zero}, "
+        f"got={actual_zero}"
+    )
 
 
 @cocotb.test()
 async def test_project(dut):
-    dut._log.info("Start")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, unit="us")
-    cocotb.start_soon(clock.start())
+    # Test all 8 ALU operations
+    for A in range(16):
+        for B in range(16):
 
-    # Reset
-    dut._log.info("Reset")
-    dut.ena.value = 1
-    dut.ui_in.value = 0
-    dut.uio_in.value = 0
-    dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
-    dut.rst_n.value = 1
+            # ADD
+            total = A + B
+            await test_alu_operation(
+                dut, A, B, 0b000,
+                total & 0xF,
+                (total >> 4) & 1
+            )
 
-    dut._log.info("Test project behavior")
+            # SUBTRACT
+            result = (A - B) & 0xF
+            await test_alu_operation(
+                dut, A, B, 0b001,
+                result,
+                0
+            )
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+            # AND
+            result = A & B
+            await test_alu_operation(
+                dut, A, B, 0b010,
+                result,
+                0
+            )
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+            # OR
+            result = A | B
+            await test_alu_operation(
+                dut, A, B, 0b011,
+                result,
+                0
+            )
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+            # XOR
+            result = A ^ B
+            await test_alu_operation(
+                dut, A, B, 0b100,
+                result,
+                0
+            )
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+            # NOT A
+            result = (~A) & 0xF
+            await test_alu_operation(
+                dut, A, B, 0b101,
+                result,
+                0
+            )
+
+            # SHIFT LEFT
+            result = (A << 1) & 0xF
+            carry = (A >> 3) & 1
+            await test_alu_operation(
+                dut, A, B, 0b110,
+                result,
+                carry
+            )
+
+            # SHIFT RIGHT
+            result = (A >> 1) & 0xF
+            await test_alu_operation(
+                dut, A, B, 0b111,
+                result,
+                0
+            )
