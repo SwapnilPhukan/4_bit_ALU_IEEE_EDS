@@ -1,3 +1,5 @@
+# Tiny Tapeout project information
+
 project:
   title: "4-bit Combinational ALU"
   author: "Swapnil Phukan"
@@ -6,11 +8,14 @@ project:
   language: "Verilog"
   clock_hz: 0
   tiles: "1x1"
+
   top_module: "tt_um_combinational"
+
   source_files:
     - "project.v"
 
 pinout:
+  # Inputs
   ui[0]: "A[0]"
   ui[1]: "A[1]"
   ui[2]: "A[2]"
@@ -20,6 +25,7 @@ pinout:
   ui[6]: "B[2]"
   ui[7]: "B[3]"
 
+  # Outputs
   uo[0]: "Result[0]"
   uo[1]: "Result[1]"
   uo[2]: "Result[2]"
@@ -29,6 +35,7 @@ pinout:
   uo[6]: ""
   uo[7]: ""
 
+  # Bidirectional pins
   uio[0]: "Opcode[0]"
   uio[1]: "Opcode[1]"
   uio[2]: "Opcode[2]"
@@ -38,4 +45,5 @@ pinout:
   uio[6]: ""
   uio[7]: ""
 
+# Do not change!
 yaml_version: 6
